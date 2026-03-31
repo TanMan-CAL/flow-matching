@@ -11,7 +11,6 @@ class Conv(nn.Module):
     def forward(self, x):
         return F.gelu(self.bn(self.conv(x)))
 
-
 class DownConv(nn.Module):
     def __init__(self, in_channels, out_channels):
         super().__init__()
@@ -20,7 +19,6 @@ class DownConv(nn.Module):
 
     def forward(self, x):
         return F.gelu(self.bn(self.conv(x)))
-
 
 class UpConv(nn.Module):
     def __init__(self, in_channels, out_channels):
@@ -31,7 +29,6 @@ class UpConv(nn.Module):
     def forward(self, x):
         return F.gelu(self.bn(self.conv(x)))
 
-
 class Flatten(nn.Module):
     def __init__(self):
         super().__init__()
@@ -39,7 +36,6 @@ class Flatten(nn.Module):
 
     def forward(self, x):
         return F.gelu(self.pool(x))
-
 
 class Unflatten(nn.Module):
     def __init__(self, in_channels):
@@ -49,7 +45,6 @@ class Unflatten(nn.Module):
 
     def forward(self, x):
         return F.gelu(self.bn(self.up(x)))
-
 
 class ConvBlock(nn.Module):
     def __init__(self, in_channels, out_channels):
@@ -61,7 +56,6 @@ class ConvBlock(nn.Module):
         x = self.c1(x)
         return self.c2(x)
 
-
 class DownBlock(nn.Module):
     def __init__(self, in_channels, out_channels):
         super().__init__()
@@ -71,7 +65,6 @@ class DownBlock(nn.Module):
     def forward(self, x):
         x = self.down(x)
         return self.block(x)
-
 
 class UpBlock(nn.Module):
     def __init__(self, in_channels, out_channels):
