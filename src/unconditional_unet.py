@@ -15,7 +15,7 @@ class UnconditionalUNet(nn.Module):
         # decoder
         self.up1 = UpBlock(4*D, D) # 4D x7x7  -> D  x14x14
         self.up2 = UpBlock(2*D, D) # 2D x14x14 -> D  x28x28
-        self.up3 = ConvBlock(2*D, D) # 2D x 28x28 -> D  x 28x28, was wrong to upblock here
+        self.up3 = ConvBlock(2*D, D) # 2D x 28x28 -> D  x 28x28, was wrong to UpBlock here
 
         # conv to map back to image channels
         self.out_conv = nn.Conv2d(D, in_channels, kernel_size=3, stride=1, padding=1)
