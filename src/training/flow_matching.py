@@ -1,4 +1,5 @@
-# src/models/flow_matching.py
+# src/training/flow_matching.py
+
 import torch
 from torch import nn
 

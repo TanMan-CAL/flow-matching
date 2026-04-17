@@ -1,6 +1,8 @@
+# src/models/class-conditioned-unet/class_conditional_unet.py
+
 import torch
 from torch import nn
-from .unet_blocks import ConvBlock, DownBlock, UpBlock, Flatten, Unflatten, FCBlock
+from .utils import ConvBlock, DownBlock, UpBlock, Flatten, Unflatten, FCBlock
 
 
 class ClassConditionalUNet(nn.Module):

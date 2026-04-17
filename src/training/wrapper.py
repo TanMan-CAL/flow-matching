@@ -1,4 +1,5 @@
-# src/models/wrapper.py
+# src/training/wrapper.py
+
 import torch
 from flow_matching import *
 

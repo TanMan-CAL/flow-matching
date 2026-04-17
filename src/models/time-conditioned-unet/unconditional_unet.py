@@ -1,6 +1,8 @@
+# src/models/time-conditioned-unet/unconditional_unet.py
+
 import torch
 from torch import nn
-from .unet_blocks import ConvBlock, DownBlock, UpBlock, Flatten, Unflatten, FCBlock
+from .utils import ConvBlock, DownBlock, UpBlock, Flatten, Unflatten, FCBlock
 
 
 class TimeConditionalUNet(nn.Module):
