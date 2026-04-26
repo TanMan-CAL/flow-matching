@@ -2,8 +2,8 @@ Recently I've been super interested in diffusion and generative models. This rep
 
 A helpful first intuition is Gaussian blur. The Guassian blur is really just understood as the average of the pixels around it. Radius defined as the `nxn` matrix that you take around it. Bigger the blur radius, the more blur the picture is. Original, n = 5, n = 10.
 
-<img src="photos/strawberry.jpg" width="150" /> <img src="photos/image (2).png" width="150" /> <img src="photos/image (5).png" width="150" />
-<img src="photos/landscape.jpg" width="150" /> <img src="photos/image (11).png" width="150" /> <img src="photos/image (12).png" width="150" />
+<img src="diffusion-experimentation/photos/strawberry.jpg" width="150" /> <img src="diffusion-experimentation/photos/image (2).png" width="150" /> <img src="diffusion-experimentation/photos/image (5).png" width="150" />
+<img src="diffusion-experimentation/photos/landscape.jpg" width="150" /> <img src="diffusion-experimentation/photos/image (11).png" width="150" /> <img src="diffusion-experimentation/photos/image (12).png" width="150" />
 
 Define forward process as moving from true image to noise, and reverse as moving from noise to true image; forward is easier :). Diffusion models learn a reverse process starting from noise to true image as a sequence of transformations. Why can't we do it one step?
 
@@ -11,24 +11,24 @@ All at once from pure noise is impossible to stabilize in one pass, and far too 
 
 Really any generative image process is a stochastic process (super high-level explanation): drift term + diffusion term. The drift term is what pushes generation towards noise during the forward process and towards structure in the reverse process. The diffusion term is some fuction $ g(t) $ for random noise with tiny Gaussian noise steps. This is better explained in Equation 6 & 7 in the paper: https://arxiv.org/pdf/2006.11239.
 
-<img src="photos/image1.png" width="500" />
+<img src="diffusion-experimentation/photos/image1.png" width="500" />
 
 Solving a reverse SDE yields a score based generative model. Transforming data to a noise distribution can be done with an SDE. It can be reversed to generate samples from noise if we know the score of the distribution at each time step.
 
 Score based generative models (SGMs) are a new paradigm in generation but foundational to diffusion. The score function $ \nabla_{x} \log {p_t}(x) $ is a vector field pointing toward the highest density regions, where data is more likely to exist at a given noise level.
 
-<img src="image.png" width="350" />
+<img src="diffusion-experimentation/photos/image.png" width="350" />
 
 Each arrow points in the direction where the probability density increases fastest. At high noise levels, a sample might begin in a low density region, but by repeatedly learning the score field, the reverse process moves it toward higher density regions where realistic images are more likely to exist (green in image).
 
 Quick 1D example (trivial but helpful admist so much abstract math):
 
-<img src="image-2.png" width="350" />
+<img src="diffusion-experimentation/photos/image-2.png" width="350" />
 
 Now think back to what I said above, think of images as points in high-dimensional space (trust me, it makes this stuff so much easier). True images lie on a tiny structured subset of the full space, and much of the space is utter garbage. But training on just the clean image distribution is not feasible as the density is sharp and concentrated.
 
 So we add Gaussian noise to the image, we create a new noisy distribution.
-<img src="image-1.png" width="750" />
+<img src="diffusion-experimentation/photos/image-1.png" width="750" />
 
 Instead of learning the clean distribution, we learn the noisy image distribution: $ s(x,t)\approx\nabla_{x} \log {p_t}(x) $. 
 

@@ -17,18 +17,18 @@ Solving a reverse SDE yields a score based generative model. Transforming data t
 
 Score based generative models (SGMs) are a new paradigm in generation but foundational to diffusion. The score function $ \nabla_{x} \log {p_t}(x) $ is a vector field pointing toward the highest density regions, where data is more likely to exist at a given noise level.
 
-<img src="image.png" width="350" />
+<img src="photos/image.png" width="350" />
 
 Each arrow points in the direction where the probability density increases fastest. At high noise levels, a sample might begin in a low density region, but by repeatedly learning the score field, the reverse process moves it toward higher density regions where realistic images are more likely to exist (green in image).
 
 Quick 1D example (trivial but helpful admist so much abstract math):
 
-<img src="image-2.png" width="350" />
+<img src="photos/image-2.png" width="350" />
 
 Now think back to what I said above, think of images as points in high-dimensional space (trust me, it makes this stuff so much easier). True images lie on a tiny structured subset of the full space, and much of the space is utter garbage. But training on just the clean image distribution is not feasible as the density is sharp and concentrated.
 
 So we add Gaussian noise to the image, we create a new noisy distribution.
-<img src="image-1.png" width="750" />
+<img src="photos/image-1.png" width="750" />
 
 Instead of learning the clean distribution, we learn the noisy image distribution: $ s(x,t)\approx\nabla_{x} \log {p_t}(x) $. 
 
