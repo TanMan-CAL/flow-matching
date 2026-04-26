@@ -4,3 +4,4 @@ The Guassian blur is really just understood as the average of the pixels around 
 <img src="photos/landscape.jpg" width="300" /> <img src="photos/image (11).png" width="300" /> <img src="photos/image (12).png" width="300" />
 
 Original, n = 5, n = 10.
+

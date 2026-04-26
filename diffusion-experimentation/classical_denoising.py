@@ -1,1 +1,0 @@
-blurred = TF.gaussian_blur(noisy, kernel_size=5, sigma=3)
