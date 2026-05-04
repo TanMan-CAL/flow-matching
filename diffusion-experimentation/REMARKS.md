@@ -36,15 +36,45 @@ Instead of learning the clean distribution, we learn the noisy image distributio
 The work in this repository is slightly different. Rather than training a score network directly, I used flow matching. For info on score based diffusion: https://yang-song.net/blog/2021/score/.
 
 
-In flow matching, the model instead learns a velocity field that describes how a sample should move along a continuous path from noise to data.
 
 
+Diffusion models learn to reverse noise and predict what to subtract. Flow matching is different: the model learns a velocity field, a direction and speed at every point in space that tells a sample where to move next.
 
-The main purpose is to improve quality of conditional diffusion models without needing a separate, pre-trained classifier.
+Think of it like a wind map. Each point in the space carries an arrow. You drop a noise sample anywhere, follow the arrows, and you arrive at a data sample. Define two distributions: $x_0 \sim p_0 \text{ (noise — standard Gaussian)}$ and $x_1 \sim p_1 \text{ (data — the real distribution)}$.
+ 
+Connect them with a linear path parameterized by some time variable $t$: $x_t = (1 - t)\, x_0 + t\, x_1$
+ 
+The velocity along this path is constant — just the displacement from noise to data:
+ 
+$$\frac{d x_t}{dt} = x_1 - x_0$$
+ 
+
+For each training step, sample a pair and a random time, calculated the interpolated point, then supervise the model on the velocity:
+ 
+$$x_t \mid x_0, x_1 = (1 - t)\, x_0 + t\, x_1$$
+ 
+$$u_t(x_t \mid x_0, x_1) = x_1 - x_0$$
+ 
+ 
+Start from a noise sample $x_0 \sim p_0$, then integrate the learned ODE forward in time:
+ 
+$$\frac{d x_t}{dt} = v_\theta(x_t, t)$$
+ 
+The simplest solver is Euler with step size $h$:
+ 
+$$x_{t+h} = x_t + h \cdot v_\theta(x_t, t)$$
+ 
+Because the training paths are straight lines, the learned field is nearly linear so far less solver steps are needed compared to diffusion. Small comparison show below:
+
+<img src="photos/flow_vs_diff.gif" width="500" />
+
+Flow matching on left versus diffusion on right.
+
+### Problem 2
 
 The fundamental problem with diffusion (unconditional generation) is that diffusion goes from noise to image step by step. This means it is highly unsuitable to generate a desired output because the generation cannot be controlled. So the question becomes: can you perturb the denoising trajectory?
 
-Answer is classifier guidance generation. First, this means to train a noisy image classifier to generate a class label. Classifier output is $ \nabla_{x_t} \log p(y \mid x_t) $. That is a noise component that is more aligned for a specific class.
+Answer is classifier guidance generation. First, this means to train a noisy image classifier to generate a class label. Classifier output is $ \nabla_{x_t} \log p(y \mid x_t) $. That is a noise component that is more aligned for a specific class. The main purpose is to improve quality of conditional diffusion models without needing a separate, pre-trained classifier.
 
 What this yields is $ \gamma \, \nabla_{x_t} \log p(y \mid x_t) $ where $ \gamma > 1  $ to amplify the signal. This shifts probability mass from the least likely to the most likely class values, meaning the greater the $ \gamma $, the more class consistent the generation. $ \gamma $ is the inverse temperature parameter. For non-technical people, low $ \gamma $ would mean exploring new options and high $ \gamma $ would mean exploitation of the best option.
 
@@ -94,3 +124,7 @@ or equivalently:
 $\hat{\epsilon}(x_t, t, y) = (1 - \gamma)\,\epsilon_\theta(x_t, t, \phi) + \gamma\,\epsilon_\theta(x_t, t, y)$
 
 This achieves the same effect as classifier guidance, but without requiring a separate classifier. The model trains itself.
+
+Thanks for reading this! I really like seeing things end to end and doing so makes it far easier for me to visualize and understand how generative models like diffusion models work.
+
+I'm also working on an autogressive MoE image generation model that I hope to showcase soon too!
