@@ -115,10 +115,15 @@ How to get class guidance without an independent classifier? Use the diffusion m
 
 Instead of training a separate classifier, we train a single diffusion model that can operate both conditionally and unconditionally. This is done using conditioning dropout, where the conditioning variable (the thing you want the model to generate according to): $ y $ is randomly removed during training. When $ y $ is removed, the model learns to behave like an unconditional model.
 
-At inference time, we can calculate both $ \epsilon_\theta(x_t, t, y) $ and $ \epsilon_\theta(x_t, t, \phi) $ using the same network. The difference between these implicitly captures the direction toward the class, replacing the need for $ \nabla_{x_t} \log p(y \mid x_t) $.
+At inference time, we can calculate both $\epsilon_\theta(x_t, t, y)$ and $\epsilon_\theta(x_t, t, \phi)$ using the same network. The difference between these implicitly captures the direction toward the class, replacing the need for $\nabla_{x_t} \log p(y \mid x_t)$.
 
-This leads to classifier-free guidance: $ \hat{\epsilon}(x_t, t, y) = \epsilon_\theta(x_t, t, \phi) + \gamma \left( \epsilon_\theta(x_t, t, y) - \epsilon_\theta(x_t, t, \phi) \right) $ or in the paper: $
-\hat{\epsilon}(x_t, t, y) = (1 - \gamma)\,\epsilon_\theta(x_t, t, \phi) + \gamma\,\epsilon_\theta(x_t, t, y) $.
+This leads to classifier-free guidance:
+
+$$\hat{\epsilon}(x_t, t, y) = \epsilon_\theta(x_t, t, \phi) + \gamma \left( \epsilon_\theta(x_t, t, y) - \epsilon_\theta(x_t, t, \phi) \right)$$
+
+or in the paper:
+
+$$\hat{\epsilon}(x_t, t, y) = (1 - \gamma)\,\epsilon_\theta(x_t, t, \phi) + \gamma\,\epsilon_\theta(x_t, t, y)$$
 
 This achieves the same effect as classifier guidance, but without requiring a separate classifier.
 
