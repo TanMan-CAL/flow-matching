@@ -9,7 +9,7 @@ Define forward process as moving from true image to noise, and reverse as moving
 
 All at once from pure noise is impossible to stabilize in one pass, and far too slow and computationally expensive. When the number of noise scales approaches infinity, we essentially perturb the distribution of data with continuously growing levels of noise. Then, the noise perturbation procedure is a **continuous-time stochastic process**. 
 
-Really any generative image process is a stochastic process (super high-level explanation): drift term + diffusion term. The drift term is what pushes generation towards noise during the forward process and towards structure in the reverse process. The diffusion term is some fuction $ g(t) $ for random noise with tiny Gaussian noise steps. This is better explained in Equation 6 & 7 in the paper: https://arxiv.org/pdf/2006.11239.
+Really any generative image process is a stochastic process (super high-level explanation): drift term + diffusion term. The drift term is what pushes generation towards noise during the forward process and towards structure in the reverse process. The diffusion term is some fuction $g(t)$ for random noise with tiny Gaussian noise steps. This is better explained in Equation 6 & 7 in the paper: https://arxiv.org/pdf/2006.11239.
 
 <img src="photos/image1.png" width="500" />
 
@@ -17,7 +17,7 @@ Solving a reverse SDE yields a score based generative model. Transforming data t
 
 Score based generative models (SGMs) are a new paradigm in generation but foundational to diffusion. The score function $ \nabla_{x} \log {p_t}(x) $ is a vector field pointing toward the highest density regions, where data is more likely to exist at a given noise level.
 
-<img src="photos/image.png" width="350" />
+<img src="photos/gradients.png" width="350" />
 
 Each arrow points in the direction where the probability density increases fastest. At high noise levels, a sample might begin in a low density region, but by repeatedly learning the score field, the reverse process moves it toward higher density regions where realistic images are more likely to exist (green in image).
 
@@ -35,42 +35,29 @@ Instead of learning the clean distribution, we learn the noisy image distributio
 
 The work in this repository is slightly different. Rather than training a score network directly, I used flow matching. For info on score based diffusion: https://yang-song.net/blog/2021/score/.
 
-
-
-
 Diffusion models learn to reverse noise and predict what to subtract. Flow matching is different: the model learns a velocity field, a direction and speed at every point in space that tells a sample where to move next.
 
 Think of it like a wind map. Each point in the space carries an arrow. You drop a noise sample anywhere, follow the arrows, and you arrive at a data sample. Define two distributions: $x_0 \sim p_0 \text{ (noise — standard Gaussian)}$ and $x_1 \sim p_1 \text{ (data — the real distribution)}$.
  
-Connect them with a linear path parameterized by some time variable $t$: $x_t = (1 - t)\, x_0 + t\, x_1$
+Connect them with a linear path parameterized by some time variable $t$: $x_t = (1 - t)\, x_0 + t\, x_1$. The velocity along this path is constant: $\frac{d x_t}{dt} = x_1 - x_0$
  
-The velocity along this path is constant — just the displacement from noise to data:
- 
-$$\frac{d x_t}{dt} = x_1 - x_0$$
- 
-
-For each training step, sample a pair and a random time, calculated the interpolated point, then supervise the model on the velocity:
+For each training step, we sample a pair and a random time, calculated the interpolated point, then supervise the model on the velocity:
  
 $$x_t \mid x_0, x_1 = (1 - t)\, x_0 + t\, x_1$$
  
 $$u_t(x_t \mid x_0, x_1) = x_1 - x_0$$
  
+
+Start from a noise sample $x_0 \sim p_0$, then integrate the learned ODE forward in time: $\frac{d x_t}{dt} = v(x_t, t)$
  
-Start from a noise sample $x_0 \sim p_0$, then integrate the learned ODE forward in time:
- 
-$$\frac{d x_t}{dt} = v_\theta(x_t, t)$$
- 
-The simplest solver is Euler with step size $h$:
- 
-$$x_{t+h} = x_t + h \cdot v_\theta(x_t, t)$$
- 
-Because the training paths are straight lines, the learned field is nearly linear so far less solver steps are needed compared to diffusion. Small comparison show below:
+The simplest solver is Euler with step size $h$ (what I used for simplicity): $x_{t+h} = x_t + h \cdot v(x_t, t)$. Because the training paths are straight lines, the learned field is nearly linear so far less solver steps are needed compared to diffusion. 
+
+Small comparison show below where flow matching is on the left and diffusion on the right.
 
 <img src="photos/flow_vs_diff.gif" width="500" />
 
-Flow matching on left versus diffusion on right.
 
-### Problem 2
+### Problem 1
 
 The fundamental problem with diffusion (unconditional generation) is that diffusion goes from noise to image step by step. This means it is highly unsuitable to generate a desired output because the generation cannot be controlled. So the question becomes: can you perturb the denoising trajectory?
 
@@ -125,6 +112,8 @@ $\hat{\epsilon}(x_t, t, y) = (1 - \gamma)\,\epsilon_\theta(x_t, t, \phi) + \gamm
 
 This achieves the same effect as classifier guidance, but without requiring a separate classifier. The model trains itself.
 
+
+### Remarks
 Thanks for reading this! I really like seeing things end to end and doing so makes it far easier for me to visualize and understand how generative models like diffusion models work.
 
 I'm also working on an autogressive MoE image generation model that I hope to showcase soon too!
