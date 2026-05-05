@@ -73,9 +73,13 @@ A normal autoencoder would map each image to a fixed latent vector. A VAE instea
 
 The VAE objective has two terms. The first term is reconstruction loss, which makes the decoded image look like the input image: $\mathcal{L}_{\text{recon}} = \|x - \hat{x}\|^2$.
 
-The second term is a KL penalty, which keeps the the encoder’s output (latent distribution) close to a standard Gaussian: $\mathcal{L}_{\text{KL}} = D_{KL}\left(q_\phi(z \mid x) \;\|\; \mathcal{N}(0, I)\right)$.
+The second term is a KL penalty, which keeps the encoder's output (latent distribution) close to a standard Gaussian:
 
-So the full objective is $\mathcal{L}_{\text{VAE}} = \mathcal{L}_{\text{recon}} + \beta \mathcal{L}_{\text{KL}}$.
+$$\mathcal{L}_{\text{KL}} = D_{KL}\left(q_\phi(z \mid x) \;\|\; \mathcal{N}(0, I)\right)$$
+
+So the full objective is:
+
+$$\mathcal{L}_{\text{VAE}} = \mathcal{L}_{\text{recon}} + \beta \mathcal{L}_{\text{KL}}$$
 
 The $\beta$ term controls how strongly we force the latent space to look Gaussian. If $\beta$ is too high, reconstructions becomes blurry because the model is forced to compress too aggressively. If $\beta$ is too low, the latent space will reconstruct well but become harder to sample from.
 
