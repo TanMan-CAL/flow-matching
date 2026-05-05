@@ -1,6 +1,6 @@
 Recently I've been super interested in diffusion and generative models. This repo documents my understanding and time spent on how image generation methods work. Something that really helped me grasp the high dimensional math that is often abstracted is to think of an image as a point in high dimensional space: `(R,G,B) * width (pixels) * height (pixels)`. Random noise is one type of point in this space, and a real image is another type of point. The goal of any image generation model is to learn how to move from the noise region of this space toward the real image region.
 
-A helpful first intuition is Gaussian blur. The Guassian blur is really just understood as the average of the pixels around it. Radius defined as the `nxn` matrix that you take around it. Bigger the blur radius, the more blur the picture is. Original, n = 5, n = 10.
+A helpful first intuition is Gaussian blur. The Guassian blur is really just understood as the average of the pixels around it. Radius defined as the `nxn` matrix that you take around it. Bigger the blur radius, the more blur the picture is.
 
 <img src="photos/strawberry.jpg" width="150" /> <img src="photos/image (2).png" width="150" /> <img src="photos/image (5).png" width="150" />
 <img src="photos/landscape.jpg" width="150" /> <img src="photos/image (11).png" width="150" /> <img src="photos/image (12).png" width="150" />
@@ -9,13 +9,16 @@ Define forward process as moving from true image to noise, and reverse as moving
 
 All at once from pure noise is impossible to stabilize in one pass, and far too slow and computationally expensive. When the number of noise scales approaches infinity, we essentially perturb the distribution of data with continuously growing levels of noise. Then, the noise perturbation procedure is a **continuous-time stochastic process**. 
 
-Really any generative image process is a stochastic process (super high-level explanation): drift term + diffusion term. The drift term is what pushes generation towards noise during the forward process and towards structure in the reverse process. The diffusion term is some fuction $g(t)$ for random noise with tiny Gaussian noise steps. This is better explained in Equation 6 & 7 in the paper: https://arxiv.org/pdf/2006.11239.
+Really any generative image process is a stochastic process (super high-level explanation): drift term + diffusion term.
+<img src="photos/sde_forward_reverse.png" width="500" />
+The drift term is what pushes generation towards noise during the forward process and towards structure in the reverse process. The diffusion term is some fuction $g(t)$ for random noise with tiny Gaussian noise steps. This is better explained in Equation 6 & 7 in the Score SDE paper by Yang Song: https://arxiv.org/pdf/2011.13456.
+
 
 <img src="photos/image1.png" width="500" />
 
 Solving a reverse SDE yields a score based generative model. Transforming data to a noise distribution can be done with an SDE. It can be reversed to generate samples from noise if we know the score of the distribution at each time step.
 
-Score based generative models (SGMs) are a new paradigm in generation but foundational to diffusion. The score function $ \nabla_{x} \log {p_t}(x) $ is a vector field pointing toward the highest density regions, where data is more likely to exist at a given noise level.
+Score based generative models (SGMs) are a paradigm in generation but foundational to diffusion. The score function $ \nabla_{x} \log {p_t}(x) $ is a vector field pointing toward the highest density regions, where data is more likely to exist at a given noise level.
 
 <img src="photos/gradients.png" width="350" />
 
@@ -37,7 +40,7 @@ The work in this repository is slightly different. Rather than training a score 
 
 Diffusion models learn to reverse noise and predict what to subtract. Flow matching is different: the model learns a velocity field, a direction and speed at every point in space that tells a sample where to move next.
 
-Think of it like a wind map. Each point in the space carries an arrow. You drop a noise sample anywhere, follow the arrows, and you arrive at a data sample. Define two distributions: $x_0 \sim p_0 \text{ (noise — standard Gaussian)}$ and $x_1 \sim p_1 \text{ (data — the real distribution)}$.
+Think of it like a wind map. Each point in the space carries an arrow. You drop a noise sample anywhere, follow the arrows, and you arrive at a data sample. Define two distributions: $x_0 \sim p_0 \text{ (noise, standard Gaussian)}$ and $x_1 \sim p_1 \text{ (data,the real distribution)}$.
  
 Connect them with a linear path parameterized by some time variable $t$: $x_t = (1 - t)\, x_0 + t\, x_1$. The velocity along this path is constant: $\frac{d x_t}{dt} = x_1 - x_0$
  
@@ -65,7 +68,7 @@ A Variational Autoencoder (VAE) solves this by learning a compressed latent repr
 $$
 \text{image } x \rightarrow \text{encoder} \rightarrow z \rightarrow \text{decoder} \rightarrow \hat{x}
 $$
-<img src="photos/vae.png" width="500" />
+<img src="photos/vae_architecture.png" width="500" />
 
 The encoder maps the image into a much smaller latent tensor $z$, and the decoder maps that latent tensor back into an image. The important part is that the latent space is lower dimensional than pixel space, so generative modeling becomes easier.
 
@@ -110,6 +113,8 @@ The fundamental problem with diffusion (unconditional generation) is that diffus
 Answer is classifier guidance generation. First, this means to train a noisy image classifier to generate a class label. Classifier output is $\nabla_{x_t} \log p(y \mid x_t)$. That is a noise component that is more aligned for a specific class. The main purpose is to improve quality of conditional diffusion models without needing a separate, pre-trained classifier.
 
 What this yields is $\gamma \, \nabla_{x_t} \log p(y \mid x_t)$ where $\gamma > 1$ to amplify the signal. This shifts probability mass from the least likely to the most likely class values, meaning the greater the $\gamma$, the more class consistent the generation. $\gamma$ is the inverse temperature parameter. For non-technical people, low $\gamma$ would mean exploring new options and high $\gamma$ would mean exploitation of the best option.
+
+<img src="photos/image.png" width="500" />
 
 So the old $\epsilon_\theta(x_t, t)$ now is $\hat{\epsilon}(x_t, t, y) = \epsilon_\theta(x_t, t) - \gamma \, \nabla_{x_t} \log p(y \mid x_t)$; this an overtly high-level explanation of how this approximation is made. More info: https://arxiv.org/pdf/2207.12598.
 
