@@ -48,7 +48,7 @@ $$x_t \mid x_0, x_1 = (1 - t)\, x_0 + t\, x_1$$
 $$u_t(x_t \mid x_0, x_1) = x_1 - x_0$$
  
 
-Start from a noise sample $x_0 \sim p_0$, then integrate the learned ODE forward in time: $\frac{d x_t}{dt} = v(x_t, t)$
+Start from a noise sample $x_0 \sim p_0$, then integrate the learned ODE forward in time: $\frac{d x_t}{dt} = v(x_t, t)$.
  
 The simplest solver is Euler with step size $h$ (what I used for simplicity): $x_{t+h} = x_t + h \cdot v(x_t, t)$. Because the training paths are straight lines, the learned field is nearly linear so far less solver steps are needed compared to diffusion. 
 
@@ -69,30 +69,17 @@ $$
 
 The encoder maps the image into a much smaller latent tensor $z$, and the decoder maps that latent tensor back into an image. The important part is that the latent space is lower dimensional than pixel space, so generative modeling becomes easier.
 
-A normal autoencoder would map each image to a fixed latent vector. A VAE instead maps each image to a distribution:
-
-$$
-q_\phi(z \mid x) = \mathcal{N}(\mu_\phi(x), \sigma_\phi(x)^2)
-$$
-
-So the encoder predicts two things: a mean $\mu$ and a variance $\sigma^2$, and we sample the latent. This makes the latent space continuous and sampleable, instead of becoming an arbitrary lookup table of compressed images.
+A normal autoencoder would map each image to a fixed latent vector. A VAE instead maps each image to a distribution. So the encoder predicts two things: a mean and a variance, and we sample the latent. This makes the latent space continuous and sampleable, instead of becoming an arbitrary lookup table of compressed images.
 
 The VAE objective has two terms. The first term is reconstruction loss, which makes the decoded image look like the input image: $\mathcal{L}_{\text{recon}} = \|x - \hat{x}\|^2$.
 
-The second term is a KL penalty, which keeps the latent distribution close to a standard Gaussian: $\mathcal{L}_{\text{KL}} = D_{KL}\left(q_\phi(z \mid x) \;\|\; \mathcal{N}(0, I)\right)$.
+The second term is a KL penalty, which keeps the the encoder’s output (latent distribution) close to a standard Gaussian: $\mathcal{L}_{\text{KL}} = D_{KL}\left(q_\phi(z \mid x) \;\|\; \mathcal{N}(0, I)\right)$.
 
-So the full objective is: 
-$$
-\mathcal{L}_{\text{VAE}} = \mathcal{L}_{\text{recon}} + \beta \mathcal{L}_{\text{KL}}
-$$.
+So the full objective is $\mathcal{L}_{\text{VAE}} = \mathcal{L}_{\text{recon}} + \beta \mathcal{L}_{\text{KL}}$.
 
 The $\beta$ term controls how strongly we force the latent space to look Gaussian. If $\beta$ is too high, reconstructions becomes blurry because the model is forced to compress too aggressively. If $\beta$ is too low, the latent space will reconstruct well but become harder to sample from.
 
-This is useful for flow matching because the flow model can now operate in latent space instead of pixel space. The new pipeline becomes:
-
-$$
-x \rightarrow \text{VAE Encoder} \rightarrow z_1
-$$
+This is useful for flow matching because the flow model can now run in latent space instead of pixel space. The new pipeline becomes $x$ to VAE encoder to $z_1$.
 
 Then flow matching is applied to $z_1$ instead of $x_1$:
 
@@ -108,27 +95,9 @@ $$
 u_t(z_t \mid z_0, z_1) = z_1 - z_0
 $$
 
-The flow model learns:
+The flow model learns $v(z_t, t) \approx z_1 - z_0$. At inference time, we start from random latent noise and integrate the learned ODE: $\frac{dz_t}{dt} = v(z_t, t)$.
 
-$$
-v_\theta(z_t, t) \approx z_1 - z_0
-$$
-
-At inference time, we start from random latent noise and integrate the learned ODE:
-
-$$
-\frac{dz_t}{dt} = v_\theta(z_t, t)
-$$
-
-Using Euler integration:
-
-$$
-z_{t+h} = z_t + h \cdot v_\theta(z_t, t)
-$$
-
-Finally, the VAE decoder turns the generated latent back into an image: $z_1 \rightarrow \text{VAE Decoder} \rightarrow \hat{x}$
-
-This is the same high-level idea used in latent diffusion models: so do the expensive generative modeling in a compressed latent space, then decode the final result back into pixels.
+Finally, the VAE decoder turns the generated latent $z_1$ back into an image $\hat{x}$. This is the same high-level idea used in latent diffusion models: so do the expensive generative modeling in a compressed latent space, then decode the final result back into pixels.
 
 ### Problem 2: Classical Free Guidance
 
