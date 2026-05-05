@@ -56,8 +56,78 @@ Small comparison show below where flow matching is on the left and diffusion on 
 
 <img src="photos/flow_vs_diff.gif" width="500" />
 
+### Problem 1: Latent Space and VAEs
 
-### Problem 1
+The first improvement is to stop doing all of this directly in pixel space. Remember to think of an image as a point in high dimensional space, but for larger images this becomes extremely expensive. For example, a `256 x 256` RGB image lives in a space with `256 * 256 * 3 = 196,608` dimensions. Learning a flow field directly over that space is possible, but it is inefficient because most pixel level changes is not semantically meaningful.
+
+A Variational Autoencoder (VAE) solves this by learning a compressed latent representation of the image. Instead of asking the flow model to move through raw pixel space, we first train an encoder-decoder model:
+
+$$
+\text{image } x \rightarrow \text{encoder} \rightarrow z \rightarrow \text{decoder} \rightarrow \hat{x}
+$$
+<img src="photos/vae.png" width="500" />
+
+The encoder maps the image into a much smaller latent tensor $z$, and the decoder maps that latent tensor back into an image. The important part is that the latent space is lower dimensional than pixel space, so generative modeling becomes easier.
+
+A normal autoencoder would map each image to a fixed latent vector. A VAE instead maps each image to a distribution:
+
+$$
+q_\phi(z \mid x) = \mathcal{N}(\mu_\phi(x), \sigma_\phi(x)^2)
+$$
+
+So the encoder predicts two things: a mean $\mu$ and a variance $\sigma^2$, and we sample the latent. This makes the latent space continuous and sampleable, instead of becoming an arbitrary lookup table of compressed images.
+
+The VAE objective has two terms. The first term is reconstruction loss, which makes the decoded image look like the input image: $\mathcal{L}_{\text{recon}} = \|x - \hat{x}\|^2$.
+
+The second term is a KL penalty, which keeps the latent distribution close to a standard Gaussian: $\mathcal{L}_{\text{KL}} = D_{KL}\left(q_\phi(z \mid x) \;\|\; \mathcal{N}(0, I)\right)$.
+
+So the full objective is: $\mathcal{L}_{\text{VAE}} = \mathcal{L}_{\text{recon}} + \beta \mathcal{L}_{\text{KL}}$.
+
+The $\beta$ term controls how strongly we force the latent space to look Gaussian. If $\beta$ is too high, reconstructions becomes blurry because the model is forced to compress too aggressively. If $\beta$ is too low, the latent space will reconstruct well but become harder to sample from.
+
+This is useful for flow matching because the flow model can now operate in latent space instead of pixel space. The new pipeline becomes:
+
+$$
+x \rightarrow \text{VAE Encoder} \rightarrow z_1
+$$
+
+Then flow matching is applied to $z_1$ instead of $x_1$:
+
+$$
+z_0 \sim \mathcal{N}(0, I)
+$$
+
+$$
+z_t = (1 - t)z_0 + t z_1
+$$
+
+$$
+u_t(z_t \mid z_0, z_1) = z_1 - z_0
+$$
+
+The flow model learns:
+
+$$
+v_\theta(z_t, t) \approx z_1 - z_0
+$$
+
+At inference time, we start from random latent noise and integrate the learned ODE:
+
+$$
+\frac{dz_t}{dt} = v_\theta(z_t, t)
+$$
+
+Using Euler integration:
+
+$$
+z_{t+h} = z_t + h \cdot v_\theta(z_t, t)
+$$
+
+Finally, the VAE decoder turns the generated latent back into an image: $z_1 \rightarrow \text{VAE Decoder} \rightarrow \hat{x}$
+
+This is the same high-level idea used in latent diffusion models: so do the expensive generative modeling in a compressed latent space, then decode the final result back into pixels.
+
+### Problem 2: Classical Free Guidance
 
 The fundamental problem with diffusion (unconditional generation) is that diffusion goes from noise to image step by step. This means it is highly unsuitable to generate a desired output because the generation cannot be controlled. So the question becomes: can you perturb the denoising trajectory?
 
