@@ -10,6 +10,7 @@ Define forward process as moving from true image to noise, and reverse as moving
 All at once from pure noise is impossible to stabilize in one pass, and far too slow and computationally expensive. When the number of noise scales approaches infinity, we essentially perturb the distribution of data with continuously growing levels of noise. Then, the noise perturbation procedure is a **continuous-time stochastic process**. 
 
 Really any generative image process is a stochastic process (super high-level explanation): drift term + diffusion term.
+
 <img src="photos/sde_forward_reverse.png" width="500" />
 The drift term is what pushes generation towards noise during the forward process and towards structure in the reverse process. The diffusion term is some fuction $g(t)$ for random noise with tiny Gaussian noise steps. This is better explained in Equation 6 & 7 in the Score SDE paper by Yang Song: https://arxiv.org/pdf/2011.13456.
 
@@ -91,10 +92,6 @@ This is useful for flow matching because the flow model can now run in latent sp
 Then flow matching is applied to $z_1$ instead of $x_1$:
 
 $$
-z_0 \sim \mathcal{N}(0, I)
-$$
-
-$$
 z_t = (1 - t)z_0 + t z_1
 $$
 
@@ -112,13 +109,14 @@ The fundamental problem with diffusion (unconditional generation) is that diffus
 
 Answer is classifier guidance generation. First, this means to train a noisy image classifier to generate a class label. Classifier output is $\nabla_{x_t} \log p(y \mid x_t)$. That is a noise component that is more aligned for a specific class. The main purpose is to improve quality of conditional diffusion models without needing a separate, pre-trained classifier.
 
-What this yields is $\gamma \, \nabla_{x_t} \log p(y \mid x_t)$ where $\gamma > 1$ to amplify the signal. This shifts probability mass from the least likely to the most likely class values, meaning the greater the $\gamma$, the more class consistent the generation. $\gamma$ is the inverse temperature parameter. For non-technical people, low $\gamma$ would mean exploring new options and high $\gamma$ would mean exploitation of the best option.
+What this yields is $\gamma \, \nabla_{x_t} \log p(y \mid x_t)$ where $\gamma > 1$ to amplify the signal. This shifts probability mass from the least likely to the most likely class values, meaning the greater the $\gamma$, the more class consistent the generation. $\gamma$ is the inverse temperature parameter. Low $\gamma$ would mean exploring new options and high $\gamma$ would mean exploitation of the best option.
 
 <img src="photos/image.png" width="500" />
 
 So the old $\epsilon_\theta(x_t, t)$ now is $\hat{\epsilon}(x_t, t, y) = \epsilon_\theta(x_t, t) - \gamma \, \nabla_{x_t} \log p(y \mid x_t)$; this an overtly high-level explanation of how this approximation is made. More info: https://arxiv.org/pdf/2207.12598.
 
 We basically sample gradients from a classifier when classifying an image of a desired class and feed that gradient to the diffusion model to ultimately perturb the model.
+
 
 How to get class guidance without an independent classifier? Use the diffusion model itself to get perturbations.
 
@@ -133,11 +131,14 @@ $$\hat{\epsilon}(x_t, t, y) = \epsilon_\theta(x_t, t, \phi) + \gamma \left( \eps
 or in the paper:
 
 $$\hat{\epsilon}(x_t, t, y) = (1 - \gamma)\,\epsilon_\theta(x_t, t, \phi) + \gamma\,\epsilon_\theta(x_t, t, y)$$
+<img src="photos/cfg2.png" width="500" />
 
-This achieves the same effect as classifier guidance, but without requiring a separate classifier.
+This achieves the same effect as classifier guidance, but without requiring a separate classifier. So finally some results: left is non-guided samples and right is classifier free guided.
+<img src="photos/cfg.png" width="500" />
+
 
 
 ### Remarks
-Thanks for reading this! I really like seeing things end to end and doing so makes it far easier for me to visualize and understand how generative models like diffusion models work.
+Thanks for reading this! I really like seeing things end to end, and this work is to visualize and understand how generative models work. 
 
 I'm also working on an autogressive MoE image generation model that I hope to showcase soon too!

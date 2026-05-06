@@ -6,6 +6,8 @@ A helpful first intuition is Gaussian blur. The Guassian blur is really just und
 
 <img src="diffusion-experimentation/photos/strawberry.jpg" width="150" /> <img src="diffusion-experimentation/photos/image (2).png" width="150" /> <img src="diffusion-experimentation/photos/image (5).png" width="150" />
 <img src="diffusion-experimentation/photos/landscape.jpg" width="150" /> <img src="diffusion-experimentation/photos/image (11).png" width="150" /> <img src="diffusion-experimentation/photos/image (12).png" width="150" />
+<img src="diffusion-experimentation/photos/strawberry.jpg" width="150" /> <img src="diffusion-experimentation/photos/image (2).png" width="150" /> <img src="diffusion-experimentation/photos/image (5).png" width="150" />
+<img src="diffusion-experimentation/photos/landscape.jpg" width="150" /> <img src="diffusion-experimentation/photos/image (11).png" width="150" /> <img src="diffusion-experimentation/photos/image (12).png" width="150" />
 
 Define forward process as moving from true image to noise, and reverse as moving from noise to true image; forward is easier :). Diffusion models learn a reverse process starting from noise to true image as a sequence of transformations. Why can't we do it one step?
 
@@ -13,6 +15,7 @@ All at once from pure noise is impossible to stabilize in one pass, and far too 
 
 Really any generative image process is a stochastic process (super high-level explanation): drift term + diffusion term. The drift term is what pushes generation towards noise during the forward process and towards structure in the reverse process. The diffusion term is some function $g(t)$ for random noise with tiny Gaussian noise steps. This is better explained in Equation 6 & 7 in the paper: https://arxiv.org/pdf/2006.11239.
 
+<img src="diffusion-experimentation/photos/image1.png" width="500" />
 <img src="diffusion-experimentation/photos/image1.png" width="500" />
 
 Solving a reverse SDE yields a score based generative model. Transforming data to a noise distribution can be done with an SDE. It can be reversed to generate samples from noise if we know the score of the distribution at each time step.
@@ -31,6 +34,7 @@ Each arrow points in the direction where the probability density increases faste
 
 Quick 1D example (trivial but helpful admist so much abstract math):
 
+<img src="diffusion-experimentation/photos/image-2.png" width="350" />
 <img src="diffusion-experimentation/photos/image-2.png" width="350" />
 
 Now think back to what I said above, think of images as points in high-dimensional space (trust me, it makes this stuff so much easier). True images lie on a tiny structured subset of the full space, and much of the space is utter garbage. But training on just the clean image distribution is not feasible as the density is sharp and concentrated.
