@@ -131,9 +131,11 @@ $$\hat{\epsilon}(x_t, t, y) = \epsilon_\theta(x_t, t, \phi) + \gamma \left( \eps
 or in the paper:
 
 $$\hat{\epsilon}(x_t, t, y) = (1 - \gamma)\,\epsilon_\theta(x_t, t, \phi) + \gamma\,\epsilon_\theta(x_t, t, y)$$
+
 <img src="diffusion-experimentation/photos/cfg2.png" width="500" />
 
 This achieves the same effect as classifier guidance, but without requiring a separate classifier. So finally some results: left is non-guided samples and right is classifier free guided.
+
 <img src="diffusion-experimentation/photos/cfg.png" width="500" />
 
 
