@@ -1,3 +1,5 @@
+### Flow Matching (Diffusion) 101
+
 Recently I've been super interested in diffusion and generative models. This repo documents my understanding and time spent on how image generation methods work. Something that really helped me grasp the high dimensional math that is often abstracted is to think of an image as a point in high dimensional space: `(R,G,B) * width (pixels) * height (pixels)`. Random noise is one type of point in this space, and a real image is another type of point. The goal of any image generation model is to learn how to move from the noise region of this space toward the real image region.
 
 A helpful first intuition is Gaussian blur. The Guassian blur is really just understood as the average of the pixels around it. Radius defined as the `nxn` matrix that you take around it. Bigger the blur radius, the more blur the picture is.
@@ -11,15 +13,15 @@ All at once from pure noise is impossible to stabilize in one pass, and far too 
 
 Really any generative image process is a stochastic process (super high-level explanation): drift term + diffusion term.
 
-<img src="diffusion-experimentation/photos/sde_forward_reverse.png" width="500" />
+<img src="diffusion-experimentation/photos/sde_forward_reverse.png" width="700" />
 The drift term is what pushes generation towards noise during the forward process and towards structure in the reverse process. The diffusion term is some fuction $g(t)$ for random noise with tiny Gaussian noise steps. This is better explained in Equation 6 & 7 in the Score SDE paper by Yang Song: https://arxiv.org/pdf/2011.13456.
 
 
-<img src="diffusion-experimentation/photos/image1.png" width="500" />
+<img src="diffusion-experimentation/photos/image1.png" width="700" />
 
 Solving a reverse SDE yields a score based generative model. Transforming data to a noise distribution can be done with an SDE. It can be reversed to generate samples from noise if we know the score of the distribution at each time step.
 
-Score based generative models (SGMs) are a paradigm in generation but foundational to diffusion. The score function $ \nabla_{x} \log {p_t}(x) $ is a vector field pointing toward the highest density regions, where data is more likely to exist at a given noise level.
+Score based generative models (SGMs) are a paradigm in generation but foundational to diffusion. The score function $\nabla_{x} \log p_t(x)$ is a vector field pointing toward the highest density regions, where data is more likely to exist at a given noise level.
 
 <img src="diffusion-experimentation/photos/gradients.png" width="350" />
 
@@ -34,7 +36,7 @@ Now think back to what I said above, think of images as points in high-dimension
 So we add Gaussian noise to the image, we create a new noisy distribution.
 <img src="diffusion-experimentation/photos/image-1.png" width="750" />
 
-Instead of learning the clean distribution, we learn the noisy image distribution: $ s(x,t)\approx\nabla_{x} \log {p_t}(x) $. 
+Instead of learning the clean distribution, we learn the noisy image distribution: $s(x,t)\approx\nabla_{x} \log p_t(x)$. 
 
 
 The work in this repository is slightly different. Rather than training a score network directly, I used flow matching. For info on score based diffusion: https://yang-song.net/blog/2021/score/.
@@ -58,7 +60,7 @@ The simplest solver is Euler with step size $h$ (what I used for simplicity): $x
 
 Small comparison show below where flow matching is on the left and diffusion on the right.
 
-<img src="diffusion-experimentation/photos/flow_vs_diff.gif" width="500" />
+<img src="diffusion-experimentation/photos/flow_vs_diff.gif" width="700" />
 
 ### Problem 1: Latent Space and VAEs
 
@@ -69,7 +71,7 @@ A Variational Autoencoder (VAE) solves this by learning a compressed latent repr
 $$
 \text{image } x \rightarrow \text{encoder} \rightarrow z \rightarrow \text{decoder} \rightarrow \hat{x}
 $$
-<img src="diffusion-experimentation/photos/vae_architecture.png" width="500" />
+<img src="diffusion-experimentation/photos/vae_architecture.png" width="700" />
 
 The encoder maps the image into a much smaller latent tensor $z$, and the decoder maps that latent tensor back into an image. The important part is that the latent space is lower dimensional than pixel space, so generative modeling becomes easier.
 
@@ -111,7 +113,7 @@ Answer is classifier guidance generation. First, this means to train a noisy ima
 
 What this yields is $\gamma \, \nabla_{x_t} \log p(y \mid x_t)$ where $\gamma > 1$ to amplify the signal. This shifts probability mass from the least likely to the most likely class values, meaning the greater the $\gamma$, the more class consistent the generation. $\gamma$ is the inverse temperature parameter. Low $\gamma$ would mean exploring new options and high $\gamma$ would mean exploitation of the best option.
 
-<img src="diffusion-experimentation/photos/image.png" width="500" />
+<img src="diffusion-experimentation/photos/image.png" width="700" />
 
 So the old $\epsilon_\theta(x_t, t)$ now is $\hat{\epsilon}(x_t, t, y) = \epsilon_\theta(x_t, t) - \gamma \, \nabla_{x_t} \log p(y \mid x_t)$; this an overtly high-level explanation of how this approximation is made. More info: https://arxiv.org/pdf/2207.12598.
 
@@ -132,11 +134,11 @@ or in the paper:
 
 $$\hat{\epsilon}(x_t, t, y) = (1 - \gamma)\,\epsilon_\theta(x_t, t, \phi) + \gamma\,\epsilon_\theta(x_t, t, y)$$
 
-<img src="diffusion-experimentation/photos/cfg2.png" width="500" />
+<img src="diffusion-experimentation/photos/cfg2.png" width="700" />
 
 This achieves the same effect as classifier guidance, but without requiring a separate classifier. So finally some results: left is non-guided samples and right is classifier free guided.
 
-<img src="diffusion-experimentation/photos/cfg.png" width="500" />
+<img src="diffusion-experimentation/photos/cfg.png" width="700" />
 
 
 
