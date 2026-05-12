@@ -115,7 +115,7 @@ What this yields is $\gamma \, \nabla_{x_t} \log p(y \mid x_t)$ where $\gamma > 
 
 <img src="diffusion-experimentation/photos/image.png" width="700" />
 
-So the old $\epsilon_\theta(x_t, t)$ now is $\hat{\epsilon}(x_t, t, y) = \epsilon_\theta(x_t, t) - \gamma \, \nabla_{x_t} \log p(y \mid x_t)$; this an overtly high-level explanation of how this approximation is made. More info: https://arxiv.org/pdf/2207.12598.
+So the old $\epsilon_\theta(x_t, t)$ now is $\hat{\epsilon}(x_t, t, y) = \epsilon_\theta(x_t, t) - \gamma \, \nabla_{x_t} \log p(y \mid x_t)$; this an overtly high-level explanation of how this approximation is made.
 
 We basically sample gradients from a classifier when classifying an image of a desired class and feed that gradient to the diffusion model to ultimately perturb the model.
 
